@@ -1,0 +1,17 @@
+eclipse.preferences.version=1
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/description=
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/enabled=true
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/isSystem=false
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/name=module-metadata-repository@/home/mahdi/git-sensinov/om2m/org.eclipse.om2m.site.in-cse/target
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/provider=
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/suffix=p2content.xml
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/type=org.eclipse.tycho.repository.module.ModuleMetadataRepository
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/uri=file\:/home/mahdi/git-sensinov/om2m/org.eclipse.om2m.site.in-cse/target/
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target/version=1.0.0
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/enabled=true
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/isSystem=false
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/name=TychoTargetPlatform
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/suffix=content.xml
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/type=org.eclipse.equinox.internal.p2.metadata.repository.LocalMetadataRepository
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/uri=file\:/home/mahdi/git-sensinov/om2m/org.eclipse.om2m.site.in-cse/target/targetPlatformRepository/
+repositories/file\:_home_mahdi_git-sensinov_om2m_org.eclipse.om2m.site.in-cse_target_targetPlatformRepository/version=0.0.1

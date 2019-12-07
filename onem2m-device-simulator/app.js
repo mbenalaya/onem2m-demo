@@ -12,8 +12,6 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-console.log(config.templates[0].type);
-
 console.log('Select the sensor type:');
 for(i=0;i<templates.length;i++){
 	console.log(i + " (" + templates[i].type+")");

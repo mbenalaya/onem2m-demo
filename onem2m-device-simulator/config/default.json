@@ -1,0 +1,45 @@
+{
+	"cse":{
+		"ip":"127.0.0.1",
+		"port": 8080,
+		"id":"server",
+		"name":"server"
+	},
+	"templates":[
+		{
+			"type": "temperature",		
+			"unit": "C",
+			"min":18,
+			"max":22,
+			"freq":10
+		},
+		{
+			"type": "humidity",		
+			"unit": "%",
+			"min":40,
+			"max":50,
+			"freq":10	
+		},	
+		{
+			"type": "luminosity",		
+			"unit": "Lux",
+			"min":300,
+			"max":500,
+			"freq":10	
+		},
+		{
+			"type": "power",		
+			"unit": "Kw",
+			"min":1000,
+			"max":2000,
+			"freq":10	
+		},
+		{
+			"type": "presence",		
+			"unit": "",
+			"min":0,
+			"max":1,
+			"freq":10
+		}
+	]
+}

@@ -19,8 +19,6 @@ var fp = require("find-free-port")
 	});
 });
 
-
-
 function listen(deviceIndex,typeIndex){
 	app.post('/'+templates[typeIndex].type+"_"+deviceIndex, function (req, res) {
 		console.log("\n[NOTIFICATION]")
@@ -77,8 +75,6 @@ function createAE(deviceIndex,typeIndex){
 		rr="true";
 		poa="http://127.0.0.1:"+port+"/"+templates[typeIndex].type+"_"+deviceIndex;
 		listen(deviceIndex,typeIndex)
-	
-	
 	}
 	var representation = {
 		"m2m:ae":{
@@ -112,11 +108,9 @@ function createAE(deviceIndex,typeIndex){
 			console.log(body);
 			if(response.statusCode==409){
 				resetAE(deviceIndex,typeIndex)
+			}else{
+				createDataContainer(deviceIndex,typeIndex);
 			}
-			createDataContainer(deviceIndex,typeIndex);
-			/*if(templates[typeIndex].stream=="down"){
-				createCommandContainer(deviceIndex,typeIndex);
-			}*/
 		}
 	});
 }
@@ -202,46 +196,6 @@ function createDataContainer(deviceIndex,typeIndex){
 	});
 }
 
-/*function createCommandContainer(deviceIndex,typeIndex){
-	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex;
-	var method = "POST";
-	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex;
-	var resourceType=3;
-	var requestId = Math.floor(Math.random() * 10000)
-	var representation = {
-		"m2m:cnt":{
-			"rn":"command",
-			"mni":10	
-		}
-	};
-
-	console.log(method+" "+uri);
-	console.log(representation);
-
-	var options = {
-		uri: uri,
-		method: method,
-		headers: {
-			"X-M2M-Origin": originator,
-			"X-M2M-RI": requestId,
-			"Content-Type": "application/json;ty="+resourceType
-		},
-		json: representation
-	};
-
-	request(options, function (error, response, body) {
-		console.log("[RESPONSE]");
-		if(error){
-			console.log(error);
-		}else{
-			console.log(response.statusCode);
-			console.log(body);
-			createSubscription(deviceIndex,typeIndex)	
-		}
-	});
-}*/
-
 function createContentInstance(deviceIndex,typeIndex){
 	console.log("\n[REQUEST]");
 	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex;
@@ -249,8 +203,6 @@ function createContentInstance(deviceIndex,typeIndex){
 	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex+"/data";
 	var resourceType=4;
 	var requestId = Math.floor(Math.random() * 10000);
-
-	//var con =  {"type":templates[typeIndex].type,"timestamp":1, "unit": templates[typeIndex].unit, "value":random(templates[typeIndex].min, templates[typeIndex].max)}
 
 	var representation = {
 		"m2m:cin":{
@@ -282,7 +234,6 @@ function createContentInstance(deviceIndex,typeIndex){
 		}
 	});
 }
-
 
 function createSubscription(deviceIndex,typeIndex){
 	console.log("\n[REQUEST]");

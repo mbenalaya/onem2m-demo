@@ -7,6 +7,7 @@
 	},
 	"templates":[
 		{
+			"stream":"up",			
 			"type": "temperature",		
 			"unit": "C",
 			"min":18,
@@ -14,6 +15,7 @@
 			"freq":10
 		},
 		{
+			"stream":"up",			
 			"type": "humidity",		
 			"unit": "%",
 			"min":40,
@@ -21,6 +23,7 @@
 			"freq":10	
 		},	
 		{
+			"stream":"up",			
 			"type": "luminosity",		
 			"unit": "Lux",
 			"min":300,
@@ -28,6 +31,7 @@
 			"freq":10	
 		},
 		{
+			"stream":"up",			
 			"type": "power",		
 			"unit": "Kw",
 			"min":1000,
@@ -35,11 +39,34 @@
 			"freq":10	
 		},
 		{
+			"stream":"up",			
 			"type": "presence",		
 			"unit": "",
 			"min":0,
 			"max":1,
 			"freq":10
+		},
+		{
+			"stream":"up",			
+			"type": "tilt",		
+			"unit": "",
+			"min":0,
+			"max":1,
+			"freq":10
+		},
+		{
+			"stream":"down",			
+			"type": "lamp",		
+			"unit": "",
+			"min":0,
+			"max":1
+		},
+		{
+			"stream":"down",			
+			"type": "buzzer",		
+			"unit": "",
+			"min":0,
+			"max":1
 		}
 	]
 }

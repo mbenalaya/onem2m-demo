@@ -26,8 +26,8 @@
 			"stream":"up",			
 			"type": "luminosity",		
 			"unit": "Lux",
-			"min":300,
-			"max":500,
+			"min":200,
+			"max":400,
 			"freq":10	
 		},
 		{

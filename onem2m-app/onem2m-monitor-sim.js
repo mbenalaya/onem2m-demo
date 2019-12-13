@@ -77,12 +77,43 @@ function createAE(){
 		}else{
 			console.log(response.statusCode);
 			console.log(body);
-			createSubscription();
+			if(response.statusCode==409){
+				resetAE();
+			}else{
+				createSubscription();
+			}
 		}
 	});
 }
 
+function resetAE(){
+	console.log("\n[REQUEST]");
+	var method = "DELETE";
+	var uri= cseUri+"/server/"+aeName;
+	var requestId = Math.floor(Math.random() * 10000);
 
+	console.log(method+" "+uri);
+
+	var options = {
+		uri: uri,
+		method: method,
+		headers: {
+			"X-M2M-Origin": aeId,
+			"X-M2M-RI": requestId,
+		}
+	};
+
+	request(options, function (error, response, body) {
+		console.log("[RESPONSE]");
+		if(error){
+			console.log(error);
+		}else{			
+			console.log(response.statusCode);
+			console.log(body);
+			createAE();
+		}
+	});
+}
 function createSubscription(){
 	console.log("\n[REQUEST]");
 	var method = "POST";
@@ -91,7 +122,7 @@ function createSubscription(){
 	var requestId = Math.floor(Math.random() * 10000);
 	var representation = {
 		"m2m:sub": {
-			"rn": "subMonitor",
+			"rn": "sub",
 			"nu": ["Cae-monitor1"],
 			"nct": 2,
 			"enc": {

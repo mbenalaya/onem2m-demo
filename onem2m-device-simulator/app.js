@@ -47,7 +47,6 @@ app.post('/devices/:name', function (req, res) {
 
 app.post('/devices', function (req, res) {
 	let typeIndex = req.query.type;
-	console.log("aaaaaaaaaaaaaaaaaaaaa"+typeIndex);
 	let name = req.query.name;
 	var object = {
 		typeIndex: typeIndex,

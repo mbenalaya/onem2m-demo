@@ -31,9 +31,15 @@ $.ajax({
         } 
     }); 
 displayDevices();
-setInterval(displayDevices, 10000);
+setInterval(displayDevices, 2000);
 
 function displayDevices(){
+    var focus = document.activeElement.id;
+    if(focus!==""){
+        value=document.getElementById(focus).value;
+
+    }
+
     $.ajax({ 
         type : "GET", 
         url : "devices",
@@ -72,11 +78,17 @@ function displayDevices(){
                     </div>'    
                 );
             }
+            console.log("aa"+document.activeElement.id);
+            if(focus!==""){
+                document.getElementById(focus).focus();
+                document.getElementById(focus).value=value;
+            }
         }, 
         error : function(body,status,error) { 
 
         } 
     });
+   
 }
 
 function deleteDevice(name) {

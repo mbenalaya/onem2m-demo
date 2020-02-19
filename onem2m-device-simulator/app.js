@@ -73,7 +73,19 @@ function listen(name,typeIndex){
 		console.log(req.body["m2m:sgn"].nev.rep["m2m:cin"]);
 		var content = req.body["m2m:sgn"].nev.rep["m2m:cin"].con;
 		console.log(templates[typeIndex].type+" "+name+" is switched to "+content);
-		//updateDevice(typeIndex,name,content)
+		
+		var object = {
+			typeIndex: typeIndex,
+			type: templates[typeIndex].type,
+			data: content,
+			icon: templates[typeIndex].icon,
+			unit: templates[typeIndex].unit,
+			stream:templates[typeIndex].stream
+		}
+
+	
+			map.set(name,object);
+
 		res.sendStatus(200);
 	});
 }

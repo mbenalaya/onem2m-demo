@@ -7,24 +7,73 @@ var bodyParser = require('body-parser');
 const readline = require('readline');
 
 var app = express();
+var map = new hashmap();
+
 app.use(bodyParser.json());
-var port;
 
-var fp = require("find-free-port")
-	fp(3000, function(err, freePort){
-		app.listen(freePort, function () {
-			port=freePort;
-			console.log("Device simulator is listening on port "+port+"\n");
-			start();
-	});
-});
+var port=80;
 
-function listen(deviceIndex,typeIndex){
-	app.post('/'+templates[typeIndex].type+"_"+deviceIndex, function (req, res) {
+app.get('/', function (req, res) {
+	res.sendFile(path.join(__dirname+'/index.html'));
+})
+
+app.get('/templates', function (req, res) {
+	res.send(templates);
+})
+
+app.get('/devices', function (req, res) {
+	var devices =[];
+	map.forEach(function(value, key) {
+	    devices.push({typeIndex:value.typeIndex,name: key, type: value.type, data: value.data, icon: value.icon,unit:value.unit,stream:value.stream});
+  	});
+	res.send(devices);
+})
+
+app.delete('/devices/:name', function (req, res) {
+	map.remove(req.params.name);
+	deleteAE(req.params.name);
+
+	res.sendStatus(204);
+})
+
+app.post('/devices/:name', function (req, res) {
+	let typeIndex = req.query.typeIndex;
+	let name = req.params.name;
+	let value = req.query.value;
+	updateDevice(typeIndex,name,value);
+
+	res.sendStatus(201);
+})
+
+app.post('/devices', function (req, res) {
+	let typeIndex = req.query.type;
+	console.log("aaaaaaaaaaaaaaaaaaaaa"+typeIndex);
+	let name = req.query.name;
+	var object = {
+		typeIndex: typeIndex,
+		type: templates[typeIndex].type,
+		data: random(templates[typeIndex].min, templates[typeIndex].max),
+		icon: templates[typeIndex].icon,
+		unit:templates[typeIndex].unit,
+		stream:templates[typeIndex].stream
+	}
+	map.set(name,object);
+
+	createAE(name,typeIndex);
+	res.sendStatus(201);
+})
+  
+app.listen(port, function () {
+	console.log('Simulator API listening on port '+port)
+})
+
+function listen(name,typeIndex){
+	app.post('/'+name, function (req, res) {
 		console.log("\n[NOTIFICATION]")
 		console.log(req.body["m2m:sgn"].nev.rep["m2m:cin"]);
 		var content = req.body["m2m:sgn"].nev.rep["m2m:cin"].con;
-		console.log(templates[typeIndex].type+"_"+deviceIndex+" is switched to "+content);
+		console.log(templates[typeIndex].type+" "+name+" is switched to "+content);
+		//updateDevice(typeIndex,name,content)
 		res.sendStatus(200);
 	});
 }
@@ -35,36 +84,11 @@ var templates = config.templates;
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
-});
+});							
 
-function start(){
-	console.log('Select the device type:');
-	for(i=0;i<templates.length;i++){
-		console.log(i + " (" + templates[i].type+")");
-	}
-
-	rl.question("-> ",(answer) => {
-		var typeIndex = `${answer}`;
-		console.log("Device type selected: "+ typeIndex +" ("+templates[typeIndex].type+")");
-		
-		console.log('\nEnter the number of devices:');
-		rl.question("-> ",(answer) => {
-			var deviceIndex = `${answer}`;
-			rl.close();
-			console.log("Device number selected: "+ deviceIndex);
-
-			for(i=0;i<deviceIndex;i++){
-				createAE(i,typeIndex);
-			}
-		
-		
-		});
-	});
-}
-
-function createAE(deviceIndex,typeIndex){
+function createAE(name,typeIndex){
 	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex ;
+	var originator = "Cae-"+name ;
 	var method = "POST";
 	var uri= cseurl;
 	var resourceType=2;
@@ -73,12 +97,12 @@ function createAE(deviceIndex,typeIndex){
 	var poa = "";
 	if(templates[typeIndex].stream=="down"){
 		rr="true";
-		poa="http://127.0.0.1:"+port+"/"+templates[typeIndex].type+"_"+deviceIndex;
-		listen(deviceIndex,typeIndex)
+		poa="http://127.0.0.1:"+port+"/"+name
+		listen(name,typeIndex)
 	}
 	var representation = {
 		"m2m:ae":{
-			"rn":templates[typeIndex].type+"_"+deviceIndex,			
+			"rn":name,			
 			"api":"app.company.com",
 			"rr": rr,
 			"poa":[poa]
@@ -107,19 +131,21 @@ function createAE(deviceIndex,typeIndex){
 			console.log(response.statusCode);
 			console.log(body);
 			if(response.statusCode==409){
-				resetAE(deviceIndex,typeIndex)
+				resetAE(name,typeIndex);
 			}else{
-				createDataContainer(deviceIndex,typeIndex);
+				createDataContainer(name,typeIndex);
 			}
 		}
 	});
 }
 
-function resetAE(deviceIndex,typeIndex){
+
+
+function deleteAE(name){
 	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex ;
+	var originator = "Cae-"+name;
 	var method = "DELETE";
-	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex;
+	var uri= cseurl+"/"+name;
 	var requestId = Math.floor(Math.random() * 10000);
 
 	console.log(method+" "+uri);
@@ -140,17 +166,47 @@ function resetAE(deviceIndex,typeIndex){
 		}else{			
 			console.log(response.statusCode);
 			console.log(body);
-			createAE(deviceIndex,typeIndex);
 
 		}
 	});
 }
 
-function createDataContainer(deviceIndex,typeIndex){
+function resetAE(name,typeIndex){
 	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex;
+	var originator = "Cae-"+name;
+	var method = "DELETE";
+	var uri= cseurl+"/"+name;
+	var requestId = Math.floor(Math.random() * 10000);
+
+	console.log(method+" "+uri);
+
+	var options = {
+		uri: uri,
+		method: method,
+		headers: {
+			"X-M2M-Origin": originator,
+			"X-M2M-RI": requestId,
+		}
+	};
+
+	request(options, function (error, response, body) {
+		console.log("[RESPONSE]");
+		if(error){
+			console.log(error);
+		}else{			
+			console.log(response.statusCode);
+			console.log(body);
+			createAE(name,typeIndex);
+
+		}
+	});
+}
+
+function createDataContainer(name,typeIndex){
+	console.log("\n[REQUEST]");
+	var originator = "Cae-"+name;
 	var method = "POST";
-	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex;
+	var uri= cseurl+"/"+name;
 	var resourceType=3;
 	var requestId = Math.floor(Math.random() * 10000)
 	var representation = {
@@ -182,70 +238,148 @@ function createDataContainer(deviceIndex,typeIndex){
 			console.log(response.statusCode);
 			console.log(body);
 		
-			createContentInstance(deviceIndex,typeIndex);
+			createContentInstance(name,typeIndex,fire);
 
 			if(templates[typeIndex].stream=="up"){
-				setInterval(function() {
-					createContentInstance(deviceIndex,typeIndex);
+				var fire = setInterval(function() {
+					createContentInstance(name,typeIndex,fire);
 				}, templates[typeIndex].freq*1000);
 			} else if(templates[typeIndex].stream=="down"){
-				createSubscription(deviceIndex,typeIndex)	
+				createSubscription(name,typeIndex)	
 			}
 		
 		}
 	});
 }
 
-function createContentInstance(deviceIndex,typeIndex){
-	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex;
+
+
+function updateDevice(typeIndex,name,data){
+	var originator = "Cae-"+name;
 	var method = "POST";
-	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex+"/data";
+	var uri= cseurl+"/"+name+"/data";
 	var resourceType=4;
 	var requestId = Math.floor(Math.random() * 10000);
+	var con = data;
 
-	var representation = {
-		"m2m:cin":{
-			"con": random(templates[typeIndex].min, templates[typeIndex].max)
-		}
-	};
+	var object = {
+		typeIndex: typeIndex,
+		type: templates[typeIndex].type,
+		data: con,
+		icon: templates[typeIndex].icon,
+		unit: templates[typeIndex].unit,
+		stream:templates[typeIndex].stream
+	}
 
-	console.log(method+" "+uri);
-	console.log(representation);
+		console.log("\n[REQUEST]");
 
-	var options = {
-		uri: uri,
-		method: method,
-		headers: {
-			"X-M2M-Origin": originator,
-			"X-M2M-RI": requestId,
-			"Content-Type": "application/json;ty="+resourceType
-		},
-		json: representation
-	};
+		map.set(name,object);
 
-	request(options, function (error, response, body) {
-		console.log("[RESPONSE]");
-		if(error){
-			console.log(error);
-		}else{
-			console.log(response.statusCode);
-			console.log(body);
-		}
-	});
+		var representation = {
+			"m2m:cin":{
+				"con": con
+			}
+		};
+	
+		console.log(method+" "+uri);
+		console.log(representation);
+	
+		var options = {
+			uri: uri,
+			method: method,
+			headers: {
+				"X-M2M-Origin": originator,
+				"X-M2M-RI": requestId,
+				"Content-Type": "application/json;ty="+resourceType
+			},
+			json: representation
+		};
+	
+		request(options, function (error, response, body) {
+			console.log("[RESPONSE]");
+			if(error){
+				console.log(error);
+			}else{
+				console.log(response.statusCode);
+				console.log(body);
+			}
+		});
+
+
+
+
 }
 
-function createSubscription(deviceIndex,typeIndex){
-	console.log("\n[REQUEST]");
-	var originator = "Cae-"+templates[typeIndex].type+"-"+deviceIndex;
+function createContentInstance(name,typeIndex,fire){
+	var originator = "Cae-"+name;
 	var method = "POST";
-	var uri= cseurl+"/"+templates[typeIndex].type+"_"+deviceIndex+"/data";
+	var uri= cseurl+"/"+name+"/data";
+	var resourceType=4;
+	var requestId = Math.floor(Math.random() * 10000);
+	var con = random(templates[typeIndex].min, templates[typeIndex].max);
+
+
+	var object = {
+		typeIndex: typeIndex,
+		type: templates[typeIndex].type,
+		data: con,
+		icon: templates[typeIndex].icon,
+		unit: templates[typeIndex].unit,
+		stream:templates[typeIndex].stream
+	}
+	if(map.has(name)){
+		console.log("\n[REQUEST]");
+
+		map.set(name,object);
+
+		var representation = {
+			"m2m:cin":{
+				"con": con
+			}
+		};
+	
+		console.log(method+" "+uri);
+		console.log(representation);
+	
+		var options = {
+			uri: uri,
+			method: method,
+			headers: {
+				"X-M2M-Origin": originator,
+				"X-M2M-RI": requestId,
+				"Content-Type": "application/json;ty="+resourceType
+			},
+			json: representation
+		};
+	
+		request(options, function (error, response, body) {
+			console.log("[RESPONSE]");
+			if(error){
+				console.log(error);
+			}else{
+				console.log(response.statusCode);
+				console.log(body);
+			}
+		});
+
+	}else{
+		clearInterval(fire);
+	}
+
+
+}
+
+function createSubscription(name,typeIndex){
+	console.log("\n[REQUEST]");
+	var originator = "Cae-"+name;
+	var method = "POST";
+	var uri= cseurl+"/"+name+"/data";
 	var resourceType=23;
 	var requestId = Math.floor(Math.random() * 10000);;
 	var representation = {
 		"m2m:sub": {
 			"rn": "sub",
-			"nu": ["/server/"+"Cae-"+templates[typeIndex].type+"-"+deviceIndex],
+			"nu": ["/server/"+"Cae-"+name],
 			"nct": 2,
 			"enc": {
 				"net": 3

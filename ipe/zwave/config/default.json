@@ -1,0 +1,11 @@
+{
+	"cse":{
+		"ip":"127.0.0.1",
+		"port": 8080,
+		"id":"server",
+		"name":"server"
+	},
+	"serial":{
+		"port":"/dev/ttyACM0"
+	}
+}

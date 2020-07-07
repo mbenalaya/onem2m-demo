@@ -6,9 +6,6 @@ var zwave = new ZWave();
 var nodes = [];
 
 var cseurl = "http://"+config.cse.ip+":"+config.cse.port+"/~/"+config.cse.id+"/"+config.cse.name
-//var aeId= "Cae-doorSensor"
-//var aeName = "doorSensor"
-//var cntName= "data"
 
 zwave.on('driver ready', function(homeid) {
     console.log('scanning homeid=0x%s...', homeid.toString(16));
@@ -39,32 +36,53 @@ zwave.on('value added', function(nodeid, comclass, valueId) {
     if (!nodes[nodeid]['classes'][comclass])
         nodes[nodeid]['classes'][comclass] = {};
     nodes[nodeid]['classes'][comclass][valueId.index] = valueId;
-    console.log("**********")
 });
 
 zwave.on('value changed', function(nodeid, comclass, value) {
-    console.logbbbbbbbbb
-
     if (nodes[nodeid]['ready']) {
         console.log('node%d: changed: %d:%s:%s->%s', nodeid, comclass,
                 value['label'],
                 nodes[nodeid]['classes'][comclass][value.index]['value'],
                 value['value']);
       
-                console.log(nodes[nodeid]['type']+"=="+"Access Control Sensor")
-                console.log(value['label']+"=="+"Access Control")
+                console.log(nodes[nodeid]['type']);
+                console.log(value['label']);
 
-                aeId="Cae-"+nodes[nodeid]['type'].replace(/\s/g, '')
-                aeName=nodes[nodeid]['type'].replace(/\s/g, '')
-                cntName="data"
+                if(nodes[nodeid]['type']=="On/Off Power Switch"){
+                    aeName="powerSwitch"
+                    if(value['label']=="Switch"){
+                        if(value['value']==true){
+                            createContentInstance("Cae-"+aeName,aeName,"status",1)
+                        }
+                        if(value['value']==false){
+                            createContentInstance("Cae-"+aeName,aeName,"status",0)
+                        }
+                    }
 
+                    if(value['label']=="Power"){
+                        createContentInstance("Cae-"+aeName,aeName,"power",value['value'])
+                    }
+                }
+            
+                if(nodes[nodeid]['type']=="Home Security Sensor"){
+                    aeName="motionSensor"
+                    if(value['label']=="Burglar"){
+                        if(value['value']==8){
+                            createContentInstance("Cae-"+aeName,aeName,"status",1)
+                        }
+                        if(value['value']==0){
+                            createContentInstance("Cae-"+aeName,aeName,"status",0)
+                        }
+                    }
+                }
                 if(nodes[nodeid]['type']=="Access Control Sensor"){
+                    aeName="doorSensor"
                     if(value['label']=="Access Control"){
                         if(value['value']==23){
-                            createContentInstance(aeId,aeName,cntName,0)
+                            createContentInstance("Cae-"+aeName,aeName,"status",0)
                         }
                         if(value['value']==22){
-                            createContentInstance(aeId,aeName,cntName,1)
+                            createContentInstance("Cae-"+aeName,aeName,"status",1)
                         }
                     }
                 }
@@ -89,11 +107,20 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
     nodes[nodeid]['loc'] = nodeinfo.loc;
     nodes[nodeid]['ready'] = true;
 
-    aeId="Cae-"+nodes[nodeid]['type'].replace(/\s/g, '')
-    aeName=nodes[nodeid]['type'].replace(/\s/g, '')
-    cntName="data"
+    if(nodes[nodeid]['type']=="On/Off Power Switch"){
+        var aeName="powerSwitch"
+        createAE("Cae-"+aeName,aeName,"status");
+        createAE("Cae-"+aeName,aeName,"power");
+    }
 
-    createAE(aeId,aeName,cntName);
+    if(nodes[nodeid]['type']=="Home Security Sensor"){
+        var aeName="motionSensor"
+        createAE("Cae-"+aeName,aeName,"status");
+    }
+    if(nodes[nodeid]['type']=="Access Control Sensor"){
+        var aeName="doorSensor"
+        createAE("Cae-"+aeName,aeName,"status");
+    }
     
     console.log('node%d: %s, %s', nodeid,
             nodeinfo.manufacturer ? nodeinfo.manufacturer
@@ -124,7 +151,6 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
 });
 
 zwave.on('notification', function(nodeid, notif) {
-    console.log("bbbbbbbbbbbbbbbbb");
     switch (notif) {
     case 0:
         console.log('node%d: message complete', nodeid);
@@ -167,8 +193,6 @@ zwave.on('scan complete', function() {
 });
 
 zwave.on('controller command', function(r,s) {
-    console.log("nnnnnnnnnnnnnnn");
-
     console.log('controller commmand feedback: r=%d, s=%d',r,s);
 });
 

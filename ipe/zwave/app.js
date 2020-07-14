@@ -3,9 +3,37 @@ var request = require('request')
 var config = require('config');
 var zwave = new ZWave();
 
-var nodes = [];
+var express = require('express');
+var path = require('path');
+var bodyParser = require('body-parser');
+var app = express();
 
+var nodes = [];
 var cseurl = "http://"+config.cse.ip+":"+config.cse.port+"/~/"+config.cse.id+"/"+config.cse.name
+
+var powerSwitchNodeId;
+app.use(bodyParser.json());
+
+
+app.listen(4000, function () {
+	console.log('Zwave IPE listening on port 4000');
+});
+
+app.post('/', function (req, res) {
+	console.log("\n◀◀◀◀◀")
+	console.log(req.body);
+	var content = req.body["m2m:sgn"].nev.rep["m2m:cin"].con;
+    console.log("Received content: "+content);
+    if(content=="1"){
+        zwave.setValue(powerSwitchNodeId,37,1,0,true);   
+     }
+    if(content=="0"){
+
+        zwave.setValue(powerSwitchNodeId,37,1,0,false);
+    }
+    res.sendStatus(200);
+
+});
 
 zwave.on('driver ready', function(homeid) {
     console.log('scanning homeid=0x%s...', homeid.toString(16));
@@ -109,8 +137,10 @@ zwave.on('node ready', function(nodeid, nodeinfo) {
 
     if(nodes[nodeid]['type']=="On/Off Power Switch"){
         var aeName="powerSwitch"
+        powerSwitchNodeId=nodeid;
         createAE("Cae-"+aeName,aeName,"status");
         createAE("Cae-"+aeName,aeName,"power");
+        createAE("Cae-"+aeName,aeName,"command","http://127.0.0.1:4000/");
     }
 
     if(nodes[nodeid]['type']=="Home Security Sensor"){
@@ -205,7 +235,7 @@ process.on('SIGINT', function() {
 });
 
 
-function createAE(aeId,aeName,cntName){
+function createAE(aeId,aeName,cntName,nu){
 	console.log("\n▶▶▶▶▶");
 	var originator = aeId;
 	var method = "POST";
@@ -215,8 +245,8 @@ function createAE(aeId,aeName,cntName){
 	var representation = {
 		"m2m:ae":{
 			"rn":aeName,			
-			"api":"app.company.com",
-			"rr":"false"
+            "api":"app.company.com",
+            "rr":"false"
 		}
 	};
 
@@ -241,12 +271,12 @@ function createAE(aeId,aeName,cntName){
 		}else{
 			console.log(response.statusCode);
 			console.log(body);
-			createContainer(aeId,aeName,cntName);
+			createContainer(aeId,aeName,cntName,nu);
 		}
 	});
 }
 
-function createContainer(aeId, aeName, cntName){
+function createContainer(aeId, aeName, cntName,nu){
 	console.log("\n▶▶▶▶▶");
 	var originator = aeId;
 	var method = "POST";
@@ -281,7 +311,11 @@ function createContainer(aeId, aeName, cntName){
 			console.log(error);
 		}else{
 			console.log(response.statusCode);
-			console.log(body);
+            console.log(body);
+            console.log(nu)
+            if(nu!=undefined ){
+                createSubscription(aeId,aeName,cntName,nu);
+            }
 		}
 	});
 }
@@ -296,6 +330,50 @@ function createContentInstance(aeId,aeName,cntName,value){
 	var representation = {
 		"m2m:cin":{
 			"con": value
+		}
+	};
+
+	console.log(method+" "+uri);
+	console.log(representation);
+
+	var options = {
+		uri: uri,
+		method: method,
+		headers: {
+			"X-M2M-Origin": originator,
+			"X-M2M-RI": requestId,
+			"Content-Type": "application/json;ty="+resourceType
+		},
+		json: representation
+	};
+
+	request(options, function (error, response, body) {
+		console.log("◀◀◀◀◀");
+		if(error){
+			console.log(error);
+		}else{
+			console.log(response.statusCode);
+			console.log(body);
+		}
+	});
+}
+
+
+function createSubscription(aeId,aeName,cntName,nu){
+	console.log("\n▶▶▶▶▶");
+	var originator = aeId;
+	var method = "POST";
+	var uri= cseurl+"/"+aeName+"/"+cntName;
+	var resourceType=23;
+	var requestId = "123456";
+	var representation = {
+		"m2m:sub": {
+			"rn": "sub",
+			"nu": [nu],
+			"nct": 2,
+			"enc": {
+				"net": 3
+			}
 		}
 	};
 

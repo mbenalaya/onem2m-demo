@@ -21,6 +21,7 @@
         var originator="Cae-admin";
         var cseUri = "http://127.0.0.1:8080";
         var cseId = "server";
+        var refresh = 5000;
 
         function getAEs(){
             $.ajax({ 
@@ -34,7 +35,6 @@
                 success : function(body,code){
                     console.log(body);
                     body["m2m:cb"].ae.forEach(function (ae) {
-                        console.log(ae.rn);
                         getCnts(ae.rn)
                     });
                 }, 
@@ -85,12 +85,7 @@
                     var cin_con=body["m2m:cin"].con;
                     var cin_ts=body["m2m:cin"].lt;
 
-                    $('#'+ae_name+'-'+cnt_name+'-ts').html(cin_ts);
-                    $('#'+ae_name+'-'+cnt_name+'-data').html(cin_con);
                     var dat=new Date(convertDate(cin_ts));
-                    console.log(cin_ts);
-                    console.log(convertDate(cin_ts));
-                    console.log(dat)
                     var x = dat.getTime();
                     var y = parseInt(cin_con);
                     series.addPoint([x, y], true, true);
@@ -109,11 +104,10 @@
                     events: {
                         load: function () {
                             var series = this.series[0];
-                            getCin(ae_name,cnt_name,series);
 
                             setInterval(function () {
                                 getCin(ae_name,cnt_name,series);
-                            }, 5000);
+                            }, refresh);
                         }
                     }
                 },
@@ -136,9 +130,8 @@
                 series: [{
                     name: cnt_name,
                     data: (function () {
-                        var data = [],
-                            time = (new Date()).getTime(),
-                            i;
+                        
+                        var data = [],time = (new Date()).getTime(),i;
                         for (i = -99; i <= -10; i += 1) {
                             data.push([
                                 time + i * 1000,

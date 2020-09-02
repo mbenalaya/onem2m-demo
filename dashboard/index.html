@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>oneM2M Device simulator</title>
+        
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+        <script src="https://code.highcharts.com/stock/highstock.js"></script>
+        <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+        <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+
+        <script>
+
+        var originator="Cae-admin";
+        var cseUri = "http://127.0.0.1:8080";
+        var cseId = "server";
+
+        function getAEs(){
+            $.ajax({ 
+                type : "GET", 
+                url : cseUri+"/"+cseId+"?rcn=4",
+                headers: {
+                    "X-M2M-Origin": originator,
+                    "Content-Type": "application/json"
+                },   
+                body:"json",
+                success : function(body,code){
+                    console.log(body);
+                    body["m2m:cb"].ae.forEach(function (ae) {
+                        console.log(ae.rn);
+                        getCnts(ae.rn)
+                    });
+                }, 
+                error : function(body,status,error) { 
+                } 
+            });
+        }
+
+        function getCnts(ae_name){
+            $.ajax({ 
+                type : "GET", 
+                url : cseUri+"/"+cseId+"/"+ae_name+"?rcn=4",
+                headers: {
+                    "X-M2M-Origin": originator,
+                    "Content-Type": "application/json"
+                },   
+                body:"json",
+                success : function(body,code){
+                    console.log(body);
+                    if(body["m2m:ae"].cnt!=undefined){
+                        body["m2m:ae"].cnt.forEach(function (cnt) {
+
+                            $('#cards').append(
+                            '<div id="'+ae_name+'-'+cnt.rn+'-chart"></div><br>'
+                        );
+                        displayChart(ae_name,cnt.rn);
+
+                        });
+                    }
+                }, 
+                error : function(body,status,error) { 
+                } 
+            });
+        }
+
+        function getCin(ae_name,cnt_name,series){
+            $.ajax({ 
+                type : "GET", 
+                url : cseUri+"/"+cseId+"/"+ae_name+"/"+cnt_name+"/la",
+                headers: {
+                    "X-M2M-Origin": originator,
+                    "Content-Type": "application/json"
+                },   
+                body:"json",
+                success : function(body,code){
+                    console.log(body);
+
+                    var cin_con=body["m2m:cin"].con;
+                    var cin_ts=body["m2m:cin"].lt;
+
+                    $('#'+ae_name+'-'+cnt_name+'-ts').html(cin_ts);
+                    $('#'+ae_name+'-'+cnt_name+'-data').html(cin_con);
+                    var dat=new Date(convertDate(cin_ts));
+                    console.log(cin_ts);
+                    console.log(convertDate(cin_ts));
+                    console.log(dat)
+                    var x = dat.getTime();
+                    var y = parseInt(cin_con);
+                    series.addPoint([x, y], true, true);
+
+                }, 
+                error : function(body,status,error) { 
+                } 
+            });
+        }
+
+        function displayChart(ae_name,cnt_name){
+            Highcharts.stockChart(ae_name+'-'+cnt_name+'-chart', {
+                chart: {
+                    backgroundColor: '#eefdec',
+                    borderWidth:1,
+                    events: {
+                        load: function () {
+                            var series = this.series[0];
+                            getCin(ae_name,cnt_name,series);
+
+                            setInterval(function () {
+                                getCin(ae_name,cnt_name,series);
+                            }, 5000);
+                        }
+                    }
+                },
+                time: {
+                    useUTC: false
+                },
+                yAxis: {
+                    labels: {
+                        align: 'left'
+                    }
+                },
+
+                title: {
+                    text: ae_name+ " | "+cnt_name,
+                },
+
+                exporting: {
+                    enabled: true
+                },
+                series: [{
+                    name: cnt_name,
+                    data: (function () {
+                        var data = [],
+                            time = (new Date()).getTime(),
+                            i;
+                        for (i = -99; i <= -10; i += 1) {
+                            data.push([
+                                time + i * 1000,
+                                0
+                            ]);
+                        }
+                        return data;
+                    }())
+                }],
+                plotOptions: {
+                    series: {
+                        dataLabels: {
+                            enabled: true,
+                            formatter: function(){
+                                var isLast = false;
+                                if(this.point.x === this.series.data[this.series.data.length -1].x && this.point.y === this.series.data[this.series.data.length -1].y) isLast = true;
+                            
+                                return isLast ? this.y : '';
+                            }
+                        }
+                    }
+                },
+
+            });
+        }
+
+        function convertDate(cin_ts){
+            var date = cin_ts.substring(0, 4) + "-" + cin_ts.substring(4,6)+"-"+ cin_ts.substring(6,8)+"T"+cin_ts.substring(9,11)+":"+cin_ts.substring(11,13)+":"+cin_ts.substring(13,15);
+            return date;
+        }
+
+        getAEs();
+
+        </script>
+
+    </head>
+
+    <body>
+        <div class="container-fluid" id="cards" > </div>
+    </body>
+
+<html>
+

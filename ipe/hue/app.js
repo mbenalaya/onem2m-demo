@@ -108,7 +108,7 @@ function createContainer(name){
 				createSubscription();
 			}else{
 				setInterval(function(){ 
-					//getState(1);
+					getState(1);
 				},1000);
 			}
 		}

@@ -14,7 +14,11 @@ var cseId= config.cse.id;
 var aeId= "Cae-light"
 var aeName = "light"
 var cntStateName= "state"
+var cntHueName= "hue"
+var cntBrightnessName= "brightness"
+var cntSaturationName= "saturation"
 var cntCommandName= "command"
+
 var notificationUri="http://127.0.0.1:4020/"
 
 app.listen(4020, function () {
@@ -23,6 +27,7 @@ app.listen(4020, function () {
 
 
 createAE();
+
 function createAE(){
 	console.log("\n▶▶▶▶▶");
 	var originator = aeId;
@@ -61,8 +66,10 @@ function createAE(){
 			console.log(response.statusCode);
 			console.log(body);
 			createContainer(cntStateName);
+			createContainer(cntHueName);
+			createContainer(cntBrightnessName);
+			createContainer(cntSaturationName);
 			createContainer(cntCommandName);
-
 		}
 	});
 }
@@ -106,7 +113,7 @@ function createContainer(name){
 			getState(1);
 			if(name==cntCommandName){
 				createSubscription();
-			}else{
+			}else if(name==cntStateName){
 				setInterval(function(){ 
 					getState(1);
 				},1000);
@@ -115,11 +122,11 @@ function createContainer(name){
 	});
 }
 
-function createContentInstance(value){
+function createContentInstance(cntName,value){
 	console.log("\n▶▶▶▶▶");
 	var originator = aeId;
 	var method = "POST";
-	var uri= cseurl+"/"+aeName+"/"+cntStateName;
+	var uri= cseurl+"/"+aeName+"/"+cntName;
 	var resourceType=4;
 	var requestId = "123456";
 	var representation = {
@@ -197,7 +204,9 @@ function createSubscription(){
 }
 
 var state=false;
-
+var hue=0;
+var sat=0;
+var bri=0;
 function getState(id){
 	console.log("\n▶▶▶▶▶");
 	var method = "GET";
@@ -218,35 +227,54 @@ function getState(id){
 			console.log(response.statusCode);
 			var json = JSON.parse(body);
 			console.log(json.state);
-			newstate=json.state.on;
-			if(newstate!=state){
-				state=newstate;
-				if(newstate==true){
-					createContentInstance("1");
+			newState=json.state.on;
+			newHue=json.state.hue;
+			newSat=json.state.sat;
+			newBri=json.state.bri;
+
+			if(newState!=state){
+				state=newState;
+				if(newState==true){
+					createContentInstance(cntStateName,"1");
 					
 				}else{
-					createContentInstance("0");
+					createContentInstance(cntStateName,"0");
 				}
+			}
+
+			if(newBri!=bri){
+				bri=newBri;
+				createContentInstance(cntBrightnessName,newBri);
+			}
+
+			if(newSat!=sat){
+				sat=newSat;					
+				createContentInstance(cntSaturationName,newSat);
+			}
+
+			if(newHue!=hue){
+				hue=newHue;
+				createContentInstance(cntHueName,newHue);
 			}
 		}
 	});
 }
 
-function updateState(id,bool){
+function updateState(id,rep){
 	console.log("\n▶▶▶▶▶");
 	var method = "PUT";
 	var uri= bridgeurl+"/lights/"+id+"/state";
 	//{"on":false, "sat":254, "bri":254,"hue":12000}
-	var representation = {
-		"on":bool
-	};
+	// var representation = {
+	// 	"on":bool
+	// };
 
 	console.log(method+" "+uri);
 
 	var options = {
 		uri: uri,
 		method: method,
-		json:representation
+		json:rep
 	};
 
 	request(options, function (error, response, body) {
@@ -263,14 +291,32 @@ function updateState(id,bool){
 app.post('/', function (req, res) {
 	console.log("\n◀◀◀◀◀")
 	console.log(req.body);
-	var content = req.body["m2m:sgn"].nev.rep["m2m:cin"].con;
-    console.log("Received content: "+content);
-    if(content=="1"){
-        updateState(1,true)   
-     }
-    if(content=="0"){
-        updateState(1,false)
+	var contentText = req.body["m2m:sgn"].nev.rep["m2m:cin"].con;
+	console.log("Received content: "+content);
+	
+
+	var content = JSON.parse(contentText);
+
+    if(content.hue!=null){
+        updateState(1,{"hue":content.hue})   
+	}
+	
+	if(content.sat!=null){
+        updateState(1,{"sat":content.sat})   
+	}
+
+	if(content.bri!=null){
+        updateState(1,{"bri":content.bri})   
+	}
+
+	if(content.state!=null){
+		if(content.state==0){
+			updateState(1,{"on":false})   
+		}else{
+			updateState(1,{"on":true})   
+		}
     }
+
     res.sendStatus(200);
 
 });

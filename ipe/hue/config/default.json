@@ -1,0 +1,13 @@
+{
+	"cse":{
+		"ip":"127.0.0.1",
+		"port": 8080,
+		"id":"server",
+		"name":"server"
+	},
+	"bridge":{
+		"ip":"10.30.94.157",
+		"port":80,
+		"username":"Zi1Q94vTPtKbw8E09tMpqLZ1qbN5E7S53sHEE-AW"
+	}
+}

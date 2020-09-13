@@ -60,7 +60,8 @@
                             $('#cards').append(
                             '<div id="'+ae_name+'-'+cnt.rn+'-chart"></div><br>'
                         );
-                        displayChart(ae_name,cnt.rn);
+                        getAllCin(ae_name,cnt.rn)
+                        //displayChart(ae_name,cnt.rn,data);
 
                         });
                     }
@@ -88,7 +89,7 @@
                     var dat=new Date(convertDate(cin_ts));
                     var x = dat.getTime();
                     var y = parseInt(cin_con);
-                    series.addPoint([x, y], true, true);
+                    series.addPoint([x, y], true, false);
 
                 }, 
                 error : function(body,status,error) { 
@@ -96,14 +97,62 @@
             });
         }
 
-        function displayChart(ae_name,cnt_name){
+        function getAllCin(ae_name,cnt_name){
+            $.ajax({ 
+                type : "GET", 
+                url : cseUri+"/"+cseId+"/"+ae_name+"/"+cnt_name+"?rcn=4",
+                headers: {
+                    "X-M2M-Origin": originator,
+                    "Content-Type": "application/json"
+                },   
+                body:"json",
+                success : function(body,code){
+                    console.log(body);
+                    var cins = body["m2m:cnt"].cin;
+                    var data = [];
+
+                    for (var i=0; i<cins.length; i++) {
+                        var cin = cins[i];
+                        var dat=new Date(convertDate(cin.lt));
+                        var x = dat.getTime();
+                        var y = parseInt(cin.con);
+                        console.log(x+" "+y)
+                        //series.data = [x, y];
+                        data.push([x,y]);
+                        
+                        //series.addPoint([x, y], true, true);
+                        
+                    }
+
+
+                    displayChart(ae_name,cnt_name,data)
+                        // var data = [];
+                        // var time = (new Date()).getTime();
+                        // var i;
+                        // for (i = -99; i <= -10; i += 1) {
+                        //     data.push([
+                        //         time + i * 1000,
+                        //         0
+                        //     ]);
+                        // }
+                        // return data;
+                    //return data;
+                }, 
+                error : function(body,status,error) { 
+                } 
+            });
+        }
+
+        function displayChart(ae_name,cnt_name,data){
             Highcharts.stockChart(ae_name+'-'+cnt_name+'-chart', {
                 chart: {
+                    //type: 'line',
                     backgroundColor: '#eefdec',
                     borderWidth:1,
                     events: {
                         load: function () {
                             var series = this.series[0];
+                            //getAllCin(ae_name,cnt_name,series);
 
                             setInterval(function () {
                                 getCin(ae_name,cnt_name,series);
@@ -129,17 +178,21 @@
                 },
                 series: [{
                     name: cnt_name,
-                    data: (function () {
-                        
-                        var data = [],time = (new Date()).getTime(),i;
-                        for (i = -99; i <= -10; i += 1) {
-                            data.push([
-                                time + i * 1000,
-                                0
-                            ]);
-                        }
-                        return data;
-                    }())
+                    data: data,
+                    // (function () {
+                    //     //return getAllCin(ae_name,cnt_name);
+
+                    //     var data = [];
+                    //     var time = (new Date()).getTime();
+                    //     var i;
+                    //     for (i = -1; i <= 0; i += 1) {
+                    //          data.push([
+                    //              time + i * 1000,
+                    //              0
+                    //          ]);
+                    //     }
+                    //     return data;
+                    // }())
                 }],
                 plotOptions: {
                     series: {

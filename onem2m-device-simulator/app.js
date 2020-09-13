@@ -223,7 +223,7 @@ function createDataContainer(name,typeIndex){
 	var representation = {
 		"m2m:cnt":{
 			"rn":"data",
-			"mni":10	
+			"mni":100	
 		}
 	};
 
